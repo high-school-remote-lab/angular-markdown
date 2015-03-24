@@ -84,6 +84,10 @@ MarkdownModule.directive('markdown', function()
                     if (model.$modelValue)
                     {
                         val = model.$modelValue;
+						if (!allowHtml)
+						{
+							val = String(val).replace(/<[^>]+>/gm, '');
+						}
                     } // end if
                 }
                 else
