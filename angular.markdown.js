@@ -1,7 +1,5 @@
-'use strict';
 //----------------------------------------------------------------------------------------------------------------------
 // A directive for rendering markdown in AngularJS.
-// https://bitbucket.org/morgul/angular-markdown
 //
 // Written by John Lindquist (original author). Modified by Jonathan Rowny (ngModel support).
 // Adapted by Christopher S. Case
@@ -10,78 +8,126 @@
 //
 // @module angular.markdown.js
 //----------------------------------------------------------------------------------------------------------------------
-var MarkdownModule = angular.module('angular-markdown', []);
 
-MarkdownModule.directive('markdown', function () {
-	var converter = new Showdown.converter();
+var MarkdownModule = angular.module("angular.markdown", []);
 
-	return {
-		restrict: 'E',
-		require: '?ngModel',
-		link: function (scope, element, attrs, model) {
-			// Check for extensions
-			var extAttr = attrs['extensions'];
-			var callPrettyPrint = false;
-			if (extAttr) {
-				var extensions = [];
+MarkdownModule.directive('markdown', function()
+{
+    var converter = new Showdown.converter();
 
-				// Convert the comma separated string into a list.
-				extAttr.split(',').forEach(function (val) {
-						// Strip any whitespace from the beginning or end.
-						extensions.push(val.replace(/^\s+|\s+$/g, ''));
-					});
+    return {
+        restrict: 'E',
+        require: '?ngModel',
+        link:  function(scope, element, attrs, model)
+        {
+            // Check for extensions
+            var extAttr = attrs['extensions'];
+            var callPrettyPrint = false;
+            if(extAttr)
+            {
+                var extensions = [];
 
-				if (extensions.indexOf('prettify') >= 0) {
-					callPrettyPrint = true;
-				} // end if
+                // Convert the comma separated string into a list.
+                extAttr.split(',').forEach(function(val)
+                {
+                    // Strip any whitespace from the beginning or end.
+                    extensions.push(val.replace(/^\s+|\s+$/g, ''));
+                });
 
-				// Create a new converter.
-				converter = new Showdown.converter({
-						extensions: extensions
-					});
-			} // end if
+                if(extensions.indexOf('prettify') >= 0)
+                {
+                    callPrettyPrint = true;
+                } // end if
 
-			// Check for option to strip whitespace
-			var stripWS = attrs['strip'];
-			if (String(stripWS).toLowerCase() == 'true') {
-				stripWS = true;
-			} else {
-				stripWS = false;
-			} // end if
+                // Create a new converter.
+                converter = new Showdown.converter({extensions: extensions});
+            } // end if
 
-			var render = function () {
-				var htmlText = "";
-				var val = "";
+            // Check for option to strip whitespace
+            var stripWS = attrs['strip'];
+            if(String(stripWS).toLowerCase() == 'true')
+            {
+                stripWS = true;
+            }
+            else
+            {
+                stripWS = false;
+            } // end if
 
-				// Check to see if we're using a model.
-				if (attrs['ngModel']) {
-					if (model.$modelValue) {
-						val = model.$modelValue;
-					} // end if
-				} else {
-					val = element.text();
-				} // end if
+            // Check for option to allow html
+            var allowHtml = attrs['allowHtml'];
+            if(String(allowHtml).toLowerCase() == 'true')
+            {
+                allowHtml = true;
+            }
+            else
+            {
+                allowHtml = false;
+            } // end if
 
-				if (stripWS) {
-					val = val.replace(/^[ /t]+/g, '').replace(/\n[ /t]+/g, '\n');
-				} // end stripWS
+            // Check for option to translate line breaks
+            var lineBreaks = attrs['lineBreaks'];
+            if (String(lineBreaks).toLowerCase() == 'true') {
+              lineBreaks = true;
+            } else {
+              lineBreaks = false;
+            } // end if
 
-				// Compile the markdown, and set it.
-				htmlText = converter.makeHtml(val);
-				element.html(htmlText);
+            var render = function()
+            {
+                var htmlText = "";
+                var val = "";
 
-				if (callPrettyPrint) {
-					prettyPrint();
-				} // end if
-			};
+                // Check to see if we're using a model.
+                if(attrs['ngModel'])
+                {
+                    if (model.$modelValue)
+                    {
+                        val = model.$modelValue;
+                    } // end if
+                }
+                else
+                {
+                    // Export using text() by default...
+                    var exportFn = 'text';
 
-			if (attrs['ngModel']) {
-				scope.$watch(attrs['ngModel'], render);
-			} // end if
+                    // But with html() if allowHtml is "true"
+                    if (allowHtml)
+                    {
+                        exportFn = 'html';
+                    } // end if
 
-			render();
-		} // end link
-	}
+                    val = element[exportFn]();
+                } // end if
+
+                if(stripWS)
+                {
+                    val = val.replace(/^[ /t]+/g, '').replace(/\n[ /t]+/g, '\n');
+                } // end stripWS
+
+                if (lineBreaks) {
+                    val = val.replace(/&#10;/g, '\n');
+                } // end lineBreaks
+
+                // Compile the markdown, and set it.
+                htmlText = converter.makeHtml(val);
+                element.html(htmlText);
+
+                if(callPrettyPrint)
+                {
+                    prettyPrint();
+                } // end if
+            };
+
+            if(attrs['ngModel'])
+            {
+                scope.$watch(attrs['ngModel'], render);
+            } // end if
+
+            render();
+        } // end link
+    }
 }); // end markdown directive
 
 //----------------------------------------------------------------------------------------------------------------------
+
